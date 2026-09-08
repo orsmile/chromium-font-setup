@@ -68,8 +68,25 @@ function Ensure-Property($Object, [string]$Name, $Value) {
 }
 
 function Invoke-Download([string]$Url, [string]$Destination) {
+    $part = "$Destination.part"
     Write-Host "Downloading $Url"
-    Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $Destination
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
+            $bits = Get-Command Start-BitsTransfer -ErrorAction SilentlyContinue
+            if ($bits) {
+                Start-BitsTransfer -Source $Url -Destination $part -Priority Foreground -RetryInterval 5 -RetryTimeout 60
+            } else {
+                Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $part
+            }
+            if ((Get-Item -LiteralPath $part).Length -le 0) { throw 'downloaded file is empty' }
+            [IO.File]::Move($part, $Destination, $true)
+            return
+        } catch {
+            if ($attempt -eq 3) { throw "Download failed after 3 attempts: $Url ($($_.Exception.Message))" }
+            Start-Sleep -Seconds ([int][math]::Pow(2, $attempt - 1))
+        }
+    }
 }
 
 function Resolve-FontSource($Font) {
@@ -188,10 +205,21 @@ function Update-Fonts($Manifest, $State) {
         $source = Resolve-FontSource $font
         $fontCache = Join-Path $CacheRoot $font.id
         Ensure-Dir $fontCache
-        $archive = Join-Path $fontCache $source.AssetName
-        Invoke-Download $source.Url $archive
-        $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash
         $old = $State.fonts.PSObject.Properties[$font.id]
+
+        $archive = Join-Path $fontCache $source.AssetName
+        $hash = $null
+        if ($old -and (Test-Path -LiteralPath $archive)) {
+            $cachedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash
+            if ($old.Value.sha256 -eq $cachedHash -and $old.Value.version -eq $source.Version) {
+                $hash = $cachedHash
+                Write-Host "$($font.displayName): cache hit ($($source.Version))."
+            }
+        }
+        if (-not $hash) {
+            Invoke-Download $source.Url $archive
+            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash
+        }
 
         if ($old -and $old.Value.sha256 -eq $hash) {
             Write-Host "$($font.displayName): already current ($($source.Version))."
