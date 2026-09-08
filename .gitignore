@@ -1,0 +1,12 @@
+# Local/editor files
+.vscode/
+.idea/
+*.user
+*.log
+
+# Optional local test/download artifacts
+cache/
+backups/
+state.json
+*.zip
+*.7z
