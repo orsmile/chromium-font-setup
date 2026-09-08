@@ -46,7 +46,7 @@ function Save-JsonFile([string]$Path, $Object) {
     try {
         [IO.File]::WriteAllText($temp, $json, [Text.UTF8Encoding]::new($false))
         if (Test-Path -LiteralPath $Path) {
-            [IO.File]::Replace($temp, $Path, $null)
+            [IO.File]::Move($temp, $Path, $true)
         } else {
             [IO.File]::Move($temp, $Path)
         }
@@ -252,7 +252,7 @@ function Restore-FileSafely([string]$Source, [string]$Destination) {
         if ((Get-FileHash -Algorithm SHA256 -LiteralPath $Source).Hash -ne (Get-FileHash -Algorithm SHA256 -LiteralPath $temp).Hash) {
             throw 'temporary restore copy failed verification'
         }
-        [IO.File]::Replace($temp, $Destination, $null)
+        [IO.File]::Move($temp, $Destination, $true)
     } catch {
         throw "Cannot safely restore '$Destination': $($_.Exception.Message)"
     } finally {
