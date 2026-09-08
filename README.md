@@ -54,7 +54,7 @@ The default action:
 ### Useful options
 
 ```powershell
-# Preview changes without writing them
+# Preview changes without writing files, downloading archives, or requiring browsers to be closed
 .\Set-WebFonts.ps1 -WhatIf
 
 # Update fonts only
@@ -76,11 +76,13 @@ The default action:
 .\Set-WebFonts.ps1 -Restore -Browser Brave
 ```
 
+`-WhatIf` is a true dry-run: it may query upstream metadata (for example GitHub release information) so it can show which font asset would be used, but it does not create cache/state directories, download font archives, install fonts, create backups, or modify browser preferences.
+
 ## Important: close browsers first
 
 Chrome, Brave, and Edge must be fully closed before their `Preferences` files are modified or restored. Chromium may overwrite external edits while it is running, so the script refuses to continue when a selected browser process is detected.
 
-Font-only updates do not require browsers to be closed.
+Font-only updates and `-WhatIf` previews do not require browsers to be closed.
 
 ## Backups and state
 
