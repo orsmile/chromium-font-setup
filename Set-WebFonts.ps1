@@ -40,7 +40,21 @@ function Load-JsonFile([string]$Path, $Fallback) {
 
 function Save-JsonFile([string]$Path, $Object) {
     $json = $Object | ConvertTo-Json -Depth 100
-    [IO.File]::WriteAllText($Path, $json, [Text.UTF8Encoding]::new($false))
+    # Never truncate the live file.  Write beside it, then replace it atomically.
+    $dir = Split-Path -Parent $Path
+    $temp = Join-Path $dir ('.' + [IO.Path]::GetFileName($Path) + '.' + [guid]::NewGuid() + '.tmp')
+    try {
+        [IO.File]::WriteAllText($temp, $json, [Text.UTF8Encoding]::new($false))
+        if (Test-Path -LiteralPath $Path) {
+            [IO.File]::Replace($temp, $Path, $null)
+        } else {
+            [IO.File]::Move($temp, $Path)
+        }
+    } catch {
+        throw "Unable to safely replace '$Path': $($_.Exception.Message)"
+    } finally {
+        if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue }
+    }
 }
 
 function Ensure-Property($Object, [string]$Name, $Value) {
@@ -219,7 +233,31 @@ function Get-ChromiumProfiles([string]$UserData) {
 function Backup-Preferences([string]$BrowserName, [IO.DirectoryInfo]$Profile, [string]$BackupDir) {
     $destDir = Join-Path $BackupDir "$BrowserName\$($Profile.Name)"
     Ensure-Dir $destDir
-    Copy-Item -LiteralPath (Join-Path $Profile.FullName 'Preferences') -Destination (Join-Path $destDir 'Preferences') -Force
+    $source = Join-Path $Profile.FullName 'Preferences'
+    $destination = Join-Path $destDir 'Preferences'
+    try {
+        [IO.File]::Copy($source, $destination, $true)
+        $sourceHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $source).Hash
+        $backupHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $destination).Hash
+        if ($sourceHash -ne $backupHash) { throw 'backup hash does not match the source' }
+    } catch {
+        throw "Cannot read or back up '$source'. The browser must be closed and Windows security software must allow this script to read the file. Original was not modified. Details: $($_.Exception.Message)"
+    }
+}
+
+function Restore-FileSafely([string]$Source, [string]$Destination) {
+    $temp = Join-Path (Split-Path -Parent $Destination) ('.' + [IO.Path]::GetFileName($Destination) + '.' + [guid]::NewGuid() + '.tmp')
+    try {
+        [IO.File]::Copy($Source, $temp, $true)
+        if ((Get-FileHash -Algorithm SHA256 -LiteralPath $Source).Hash -ne (Get-FileHash -Algorithm SHA256 -LiteralPath $temp).Hash) {
+            throw 'temporary restore copy failed verification'
+        }
+        [IO.File]::Replace($temp, $Destination, $null)
+    } catch {
+        throw "Cannot safely restore '$Destination': $($_.Exception.Message)"
+    } finally {
+        if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue }
+    }
 }
 
 function Set-FontMap($FontsNode, [string]$Kind, [string]$Family, [string[]]$Scripts) {
@@ -298,7 +336,7 @@ function Restore-LatestBackup([string[]]$Names) {
             $source = Join-Path $profileDir.FullName 'Preferences'
             if ((Test-Path $source) -and (Test-Path (Split-Path $target))) {
                 if ($PSCmdlet.ShouldProcess("$name/$($profileDir.Name)", "Restore Preferences from $($latest.Name)")) {
-                    Copy-Item -LiteralPath $source -Destination $target -Force
+                    Restore-FileSafely $source $target
                     Write-Host "$name/$($profileDir.Name): restored."
                 }
             }
