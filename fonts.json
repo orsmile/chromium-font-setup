@@ -3,11 +3,11 @@
     {
       "id": "line-seed-tw",
       "displayName": "LINE Seed TW",
-      "browserFamily": "LINE Seed TW",
+      "browserFamily": "LINE Seed TW_TTF",
       "sourceType": "direct",
       "url": "https://seed.line.me/src/images/fonts/LINE_Seed_TW.zip",
       "archiveType": "zip",
-      "installPatterns": ["*.ttf", "*.otf"],
+      "installPatterns": ["*.ttf"],
       "license": "SIL Open Font License 1.1",
       "homepage": "https://seed.line.me/index_tw.html"
     },
@@ -37,8 +37,8 @@
     }
   ],
   "browserSettings": {
-    "standard": "LINE Seed TW",
-    "sansSerif": "LINE Seed TW",
+    "standard": "LINE Seed TW_TTF",
+    "sansSerif": "LINE Seed TW_TTF",
     "serif": "Noto Serif TC",
     "fixed": "Sarasa Mono TC",
     "defaultFontSize": 17,

@@ -266,7 +266,8 @@ function Update-Fonts($Manifest, $State) {
 
         $files = @()
         foreach ($pattern in $font.installPatterns) {
-            $files += Get-ChildItem -Path $extract -Recurse -File -Filter $pattern
+            $files += Get-ChildItem -Path $extract -Recurse -File -Filter $pattern |
+                Where-Object { $_.Name -notlike '._*' }
         }
         $files = $files | Sort-Object FullName -Unique
         if (-not $files) { throw "No font files found after extracting $($font.displayName)." }

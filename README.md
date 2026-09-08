@@ -6,8 +6,8 @@ The default profile is tuned for high-DPI displays and Traditional Chinese brows
 
 | Setting | Default |
 | --- | --- |
-| Standard | LINE Seed TW |
-| Sans-serif | LINE Seed TW |
+| Standard | LINE Seed TW_TTF |
+| Sans-serif | LINE Seed TW_TTF |
 | Serif | Noto Serif TC |
 | Fixed-width | Sarasa Mono TC |
 | Default font size | 17 px |
@@ -106,8 +106,8 @@ Example browser configuration:
 ```json
 {
   "browserSettings": {
-    "standard": "LINE Seed TW",
-    "sansSerif": "LINE Seed TW",
+    "standard": "LINE Seed TW_TTF",
+    "sansSerif": "LINE Seed TW_TTF",
     "serif": "Noto Serif TC",
     "fixed": "Sarasa Mono TC",
     "defaultFontSize": 17,
