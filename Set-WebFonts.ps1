@@ -66,18 +66,20 @@ function Resolve-FontSource($Font) {
     if ($Font.sourceType -eq 'github-release') {
         $api = "https://api.github.com/repos/$($Font.repo)/releases?per_page=20"
         $headers = @{ 'User-Agent' = 'chromium-font-setup'; 'Accept' = 'application/vnd.github+json' }
-        $releases = @(Invoke-RestMethod -Uri $api -Headers $headers)
+        $response = Invoke-RestMethod -Uri $api -Headers $headers
+        $releases = @($response | ForEach-Object { $_ })
         $pattern = [string]$Font.assetRegex
         $seen = New-Object System.Collections.Generic.List[string]
 
         foreach ($release in $releases) {
-            foreach ($asset in @($release.assets)) {
+            $tag = [string]$release.tag_name
+            foreach ($asset in @($release.assets | ForEach-Object { $_ })) {
                 $name = [string]$asset.name
                 if (-not [string]::IsNullOrWhiteSpace($name)) { [void]$seen.Add($name) }
                 if ([regex]::IsMatch($name, $pattern, [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {
                     return [pscustomobject]@{
                         Url = [string]$asset.browser_download_url
-                        Version = [string]$release.tag_name
+                        Version = $tag
                         AssetName = $name
                     }
                 }
@@ -90,6 +92,34 @@ function Resolve-FontSource($Font) {
     }
 
     throw "Unsupported sourceType '$($Font.sourceType)'."
+}
+
+function Expand-FontArchive([string]$Archive, [string]$Destination, [string]$ArchiveType) {
+    switch ($ArchiveType.ToLowerInvariant()) {
+        'zip' {
+            Expand-Archive -LiteralPath $Archive -DestinationPath $Destination -Force
+        }
+        '7z' {
+            $sevenZip = Get-Command 7z -ErrorAction SilentlyContinue
+            if (-not $sevenZip) { $sevenZip = Get-Command 7zz -ErrorAction SilentlyContinue }
+            if ($sevenZip) {
+                & $sevenZip.Source x '-y' "-o$Destination" '--' $Archive | Out-Null
+                if ($LASTEXITCODE -ne 0) { throw "7-Zip failed to extract $Archive (exit $LASTEXITCODE)." }
+                return
+            }
+
+            $tar = Get-Command tar -ErrorAction SilentlyContinue
+            if ($tar) {
+                & $tar.Source -xf $Archive -C $Destination
+                if ($LASTEXITCODE -eq 0) { return }
+            }
+
+            throw 'Cannot extract .7z archive. Install 7-Zip (7z/7zz on PATH), then rerun the script.'
+        }
+        default {
+            throw "Unsupported archiveType '$ArchiveType'."
+        }
+    }
 }
 
 function Get-FontRegistryName([string]$FileName) {
@@ -157,7 +187,7 @@ function Update-Fonts($Manifest, $State) {
         $extract = Join-Path $fontCache 'extracted'
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $extract
         Ensure-Dir $extract
-        Expand-Archive -LiteralPath $archive -DestinationPath $extract -Force
+        Expand-FontArchive $archive $extract ([string]$font.archiveType)
 
         $files = @()
         foreach ($pattern in $font.installPatterns) {
