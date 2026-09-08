@@ -184,6 +184,35 @@ public static class FontBroadcast {
     [void][FontBroadcast]::SendMessageTimeout([IntPtr]0xffff, 0x001D, [UIntPtr]::Zero, [IntPtr]::Zero, 2, 1000, [ref]$result)
 }
 
+function Download-FontSources($Requests) {
+    $jobs = @($Requests | ForEach-Object {
+        Start-ThreadJob -ArgumentList $_.Url, $_.Destination -ScriptBlock {
+            param($url, $destination)
+            $part = "$destination.part"
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+                try {
+                    Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
+                    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $part
+                    if ((Get-Item -LiteralPath $part).Length -le 0) { throw 'downloaded file is empty' }
+                    [IO.File]::Move($part, $destination, $true)
+                    return
+                } catch {
+                    if ($attempt -eq 3) { throw }
+                    Start-Sleep -Seconds $attempt
+                }
+            }
+        }
+    })
+    try {
+        $jobs | Wait-Job | Out-Null
+        foreach ($job in $jobs) {
+            Receive-Job $job -ErrorAction Stop
+        }
+    } finally {
+        $jobs | Remove-Job -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Update-Fonts($Manifest, $State) {
     if ($WhatIfPreference) {
         foreach ($font in $Manifest.fonts) {
@@ -201,25 +230,29 @@ function Update-Fonts($Manifest, $State) {
     Ensure-Dir $StateRoot
     if ($null -eq $State.fonts) { $State | Add-Member -NotePropertyName fonts -NotePropertyValue ([pscustomobject]@{}) -Force }
 
+    $resolved = @()
+    $downloads = @()
     foreach ($font in $Manifest.fonts) {
         $source = Resolve-FontSource $font
         $fontCache = Join-Path $CacheRoot $font.id
         Ensure-Dir $fontCache
-        $old = $State.fonts.PSObject.Properties[$font.id]
-
         $archive = Join-Path $fontCache $source.AssetName
+        $old = $State.fonts.PSObject.Properties[$font.id]
         $hash = $null
         if ($old -and (Test-Path -LiteralPath $archive)) {
-            $cachedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash
-            if ($old.Value.sha256 -eq $cachedHash -and $old.Value.version -eq $source.Version) {
-                $hash = $cachedHash
-                Write-Host "$($font.displayName): cache hit ($($source.Version))."
-            }
+            $candidate = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash
+            if ($old.Value.sha256 -eq $candidate -and $old.Value.version -eq $source.Version) { $hash = $candidate }
         }
-        if (-not $hash) {
-            Invoke-Download $source.Url $archive
-            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash
-        }
+        $item = [pscustomobject]@{ Font = $font; Source = $source; Archive = $archive; Old = $old; Hash = $hash }
+        $resolved += $item
+        if (-not $hash) { $downloads += [pscustomobject]@{ Url = $source.Url; Destination = $archive } }
+    }
+    if ($downloads.Count -gt 0) { Download-FontSources $downloads }
+
+    foreach ($item in $resolved) {
+        $font = $item.Font; $source = $item.Source; $archive = $item.Archive; $old = $item.Old
+        $fontCache = Join-Path $CacheRoot $font.id
+        $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash
 
         if ($old -and $old.Value.sha256 -eq $hash) {
             Write-Host "$($font.displayName): already current ($($source.Version))."
