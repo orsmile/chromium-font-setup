@@ -65,16 +65,28 @@ function Resolve-FontSource($Font) {
 
     if ($Font.sourceType -eq 'github-release') {
         $api = "https://api.github.com/repos/$($Font.repo)/releases?per_page=20"
-        $headers = @{ 'User-Agent' = 'chromium-font-setup' }
-        $releases = Invoke-RestMethod -Uri $api -Headers $headers
+        $headers = @{ 'User-Agent' = 'chromium-font-setup'; 'Accept' = 'application/vnd.github+json' }
+        $releases = @(Invoke-RestMethod -Uri $api -Headers $headers)
+        $pattern = [string]$Font.assetRegex
+        $seen = New-Object System.Collections.Generic.List[string]
+
         foreach ($release in $releases) {
-            foreach ($asset in $release.assets) {
-                if ($asset.name -match $Font.assetRegex) {
-                    return [pscustomobject]@{ Url = $asset.browser_download_url; Version = $release.tag_name; AssetName = $asset.name }
+            foreach ($asset in @($release.assets)) {
+                $name = [string]$asset.name
+                if (-not [string]::IsNullOrWhiteSpace($name)) { [void]$seen.Add($name) }
+                if ([regex]::IsMatch($name, $pattern, [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {
+                    return [pscustomobject]@{
+                        Url = [string]$asset.browser_download_url
+                        Version = [string]$release.tag_name
+                        AssetName = $name
+                    }
                 }
             }
         }
-        throw "No matching release asset found for $($Font.displayName)."
+
+        $preview = @($seen | Select-Object -First 40)
+        $seenText = if ($preview.Count -gt 0) { $preview -join ', ' } else { '<none>' }
+        throw "No matching release asset found for $($Font.displayName). Pattern: $pattern. Assets seen: $seenText"
     }
 
     throw "Unsupported sourceType '$($Font.sourceType)'."
