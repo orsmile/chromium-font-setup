@@ -17,7 +17,7 @@
       "browserFamily": "Noto Serif TC",
       "sourceType": "github-release",
       "repo": "notofonts/noto-cjk",
-      "assetRegex": "^.*NotoSerifCJKtc\\.zip$",
+      "assetRegex": "^15_NotoSerifTC\\.zip$",
       "archiveType": "zip",
       "installPatterns": ["*.otf", "*.ttf"],
       "license": "SIL Open Font License 1.1",
