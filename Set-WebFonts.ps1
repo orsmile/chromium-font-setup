@@ -112,6 +112,18 @@ public static class FontBroadcast {
 }
 
 function Update-Fonts($Manifest, $State) {
+    if ($WhatIfPreference) {
+        foreach ($font in $Manifest.fonts) {
+            $source = Resolve-FontSource $font
+            Write-Host "$($font.displayName): source $($source.Version) -> $($source.AssetName)"
+            [void]$PSCmdlet.ShouldProcess(
+                $font.displayName,
+                "Check/download $($source.Url), compare SHA-256, and install only if changed"
+            )
+        }
+        return
+    }
+
     Ensure-Dir $CacheRoot
     Ensure-Dir $StateRoot
     if ($null -eq $State.fonts) { $State | Add-Member -NotePropertyName fonts -NotePropertyValue ([pscustomobject]@{}) -Force }
@@ -150,7 +162,8 @@ function Update-Fonts($Manifest, $State) {
         }
     }
 
-    if (-not $WhatIfPreference) { Save-JsonFile $StatePath $State; Broadcast-FontChange }
+    Save-JsonFile $StatePath $State
+    Broadcast-FontChange
 }
 
 function Get-ChromiumProfiles([string]$UserData) {
@@ -208,7 +221,7 @@ function Assert-BrowsersClosed([string[]]$Names) {
 }
 
 function Configure-Browsers($Manifest, [string[]]$Names) {
-    Assert-BrowsersClosed $Names
+    if (-not $WhatIfPreference) { Assert-BrowsersClosed $Names }
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     $backupDir = Join-Path $BackupRoot $stamp
     $changed = 0
@@ -230,7 +243,7 @@ function Configure-Browsers($Manifest, [string[]]$Names) {
 }
 
 function Restore-LatestBackup([string[]]$Names) {
-    Assert-BrowsersClosed $Names
+    if (-not $WhatIfPreference) { Assert-BrowsersClosed $Names }
     if (-not (Test-Path $BackupRoot)) { throw 'No backups found.' }
     $latest = Get-ChildItem -LiteralPath $BackupRoot -Directory | Sort-Object Name -Descending | Select-Object -First 1
     if (-not $latest) { throw 'No backups found.' }
@@ -255,8 +268,12 @@ if ($env:OS -ne 'Windows_NT') { throw 'This script currently supports Windows on
 if (-not (Test-Path $ManifestPath)) { throw "Missing manifest: $ManifestPath" }
 
 $manifest = Get-Content -Raw -LiteralPath $ManifestPath | ConvertFrom-Json
-Ensure-Dir $StateRoot
-Ensure-Dir $BackupRoot
+
+if (-not $WhatIfPreference) {
+    Ensure-Dir $StateRoot
+    Ensure-Dir $BackupRoot
+}
+
 $state = Load-JsonFile $StatePath ([pscustomobject]@{ fonts = [pscustomobject]@{} })
 
 if ($Restore) {
