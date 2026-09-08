@@ -1,0 +1,49 @@
+{
+  "fonts": [
+    {
+      "id": "line-seed-tw",
+      "displayName": "LINE Seed TW",
+      "browserFamily": "LINE Seed TW",
+      "sourceType": "direct",
+      "url": "https://seed.line.me/src/images/fonts/LINE_Seed_TW.zip",
+      "archiveType": "zip",
+      "installPatterns": ["*.ttf", "*.otf"],
+      "license": "SIL Open Font License 1.1",
+      "homepage": "https://seed.line.me/index_tw.html"
+    },
+    {
+      "id": "noto-serif-tc",
+      "displayName": "Noto Serif TC",
+      "browserFamily": "Noto Serif TC",
+      "sourceType": "github-release",
+      "repo": "notofonts/noto-cjk",
+      "assetRegex": "^.*NotoSerifCJKtc\\.zip$",
+      "archiveType": "zip",
+      "installPatterns": ["*.otf", "*.ttf"],
+      "license": "SIL Open Font License 1.1",
+      "homepage": "https://github.com/notofonts/noto-cjk"
+    },
+    {
+      "id": "sarasa-mono-tc",
+      "displayName": "Sarasa Mono TC",
+      "browserFamily": "Sarasa Mono TC",
+      "sourceType": "github-release",
+      "repo": "be5invis/Sarasa-Gothic",
+      "assetRegex": "^Sarasa-Mono-TC-[0-9].*\\.zip$",
+      "archiveType": "zip",
+      "installPatterns": ["*.ttf", "*.otf"],
+      "license": "SIL Open Font License 1.1",
+      "homepage": "https://github.com/be5invis/Sarasa-Gothic"
+    }
+  ],
+  "browserSettings": {
+    "standard": "LINE Seed TW",
+    "sansSerif": "LINE Seed TW",
+    "serif": "Noto Serif TC",
+    "fixed": "Sarasa Mono TC",
+    "defaultFontSize": 17,
+    "defaultFixedFontSize": 16,
+    "minimumFontSize": 13,
+    "scripts": ["Hant", "Zyyy"]
+  }
+}
