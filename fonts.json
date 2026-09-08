@@ -29,9 +29,9 @@
       "browserFamily": "Sarasa Mono TC",
       "sourceType": "github-release",
       "repo": "be5invis/Sarasa-Gothic",
-      "assetRegex": "^Sarasa-Mono-TC-[0-9].*\\.zip$",
+      "assetRegex": "^Sarasa-TTF-[0-9].*\\.zip$",
       "archiveType": "zip",
-      "installPatterns": ["*.ttf", "*.otf"],
+      "installPatterns": ["*mono-tc*.ttf"],
       "license": "SIL Open Font License 1.1",
       "homepage": "https://github.com/be5invis/Sarasa-Gothic"
     }
