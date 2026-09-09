@@ -1,27 +1,43 @@
 # Chromium Font Setup
 
-Automatically install/update Traditional Chinese fonts and configure font settings for Chrome, Brave, and Edge on Windows.
+Automatically install/update CJK fonts and configure per-script font mappings for Chrome, Brave, and Edge on Windows.
 
-The default profile is tuned for high-DPI displays and Traditional Chinese browsing:
+The default profile is tuned for high-DPI displays and multi-script CJK browsing:
 
 | Setting | Default |
 | --- | --- |
-| Standard | LINE Seed TW_TTF |
-| Sans-serif | LINE Seed TW_TTF |
-| Serif | Noto Serif TC |
-| Fixed-width | Sarasa Mono TC |
+| Standard / Sans-serif · `Hant` | LINE Seed TW_TTF |
+| Standard / Sans-serif · `Hans` | MiSans |
+| Standard / Sans-serif · `Jpan` | LINE Seed JP_TTF |
+| Standard / Sans-serif · `Kore` | LINE Seed Sans KR |
+| Standard / Sans-serif · `Zyyy` | MiSans |
+| Serif (all scripts) | Noto Serif TC |
+| Fixed-width (all scripts) | Sarasa Mono TC |
 | Default font size | 17 px |
 | Fixed-width size | 16 px |
 | Minimum font size | 13 px |
-| Chromium scripts | `Hant`, `Zyyy` |
+
+`Zyyy` is Chromium's common/default script entry. Pages without a more specific script mapping fall back to MiSans.
 
 ## Font sources
 
 Fonts are downloaded from their upstream sources and are **not vendored in this repository**.
 
-- [LINE Seed TW](https://seed.line.me/index_tw.html) — official LINE download, SIL Open Font License 1.1
+- [LINE Seed TW / JP / KR](https://seed.line.me/) — official LINE download, SIL Open Font License 1.1
+- [MiSans](https://hyperos.mi.com/font/) — official Xiaomi HyperOS font package, MiSans Font License Agreement
 - [Noto Serif CJK / Noto Serif TC](https://github.com/notofonts/noto-cjk) — GitHub releases, SIL Open Font License 1.1
 - [Sarasa Gothic / Sarasa Mono TC](https://github.com/be5invis/Sarasa-Gothic) — GitHub releases, SIL Open Font License 1.1
+
+Browser font family names match the Windows-installed font name tables (typically name ID 16 / typographic family):
+
+| Family used in Preferences | Package |
+| --- | --- |
+| `LINE Seed TW_TTF` | LINE Seed TW desktop TTF |
+| `LINE Seed JP_TTF` | LINE Seed JP desktop TTF (not App fonts) |
+| `LINE Seed Sans KR` | LINE Seed KR TTF |
+| `MiSans` | MiSans static TTF (not MiSans VF) |
+| `Noto Serif TC` | Noto Serif TC |
+| `Sarasa Mono TC` | Sarasa Mono TC |
 
 For GitHub-hosted fonts, the script scans recent releases for a matching asset instead of assuming that `/releases/latest` belongs to the required font family.
 
@@ -49,7 +65,7 @@ The default action:
 3. Installs/updates changed fonts for the current Windows user.
 4. Finds `Default` and `Profile N` profiles in Chrome, Brave, and Edge.
 5. Backs up each `Preferences` file.
-6. Configures Chromium font mappings for Traditional Chinese (`Hant`) and the common/default script (`Zyyy`).
+6. Configures Chromium per-script font mappings (`Hant`, `Hans`, `Jpan`, `Kore`, `Zyyy`).
 
 ### Useful options
 
@@ -101,24 +117,60 @@ Each browser configuration run creates a timestamped backup before changing any 
 
 Edit `fonts.json` to change font sources or browser defaults.
 
+`standard`, `sansSerif`, `serif`, and `fixed` may be either:
+
+- an object mapping Chromium script codes to family names (recommended), or
+- a plain string, which is written only to the `Zyyy` common/default script entry.
+
 Example browser configuration:
 
 ```json
 {
   "browserSettings": {
-    "standard": "LINE Seed TW_TTF",
-    "sansSerif": "LINE Seed TW_TTF",
-    "serif": "Noto Serif TC",
-    "fixed": "Sarasa Mono TC",
+    "standard": {
+      "Hant": "LINE Seed TW_TTF",
+      "Hans": "MiSans",
+      "Jpan": "LINE Seed JP_TTF",
+      "Kore": "LINE Seed Sans KR",
+      "Zyyy": "MiSans"
+    },
+    "sansSerif": {
+      "Hant": "LINE Seed TW_TTF",
+      "Hans": "MiSans",
+      "Jpan": "LINE Seed JP_TTF",
+      "Kore": "LINE Seed Sans KR",
+      "Zyyy": "MiSans"
+    },
+    "serif": {
+      "Hant": "Noto Serif TC",
+      "Hans": "Noto Serif TC",
+      "Jpan": "Noto Serif TC",
+      "Kore": "Noto Serif TC",
+      "Zyyy": "Noto Serif TC"
+    },
+    "fixed": {
+      "Hant": "Sarasa Mono TC",
+      "Hans": "Sarasa Mono TC",
+      "Jpan": "Sarasa Mono TC",
+      "Kore": "Sarasa Mono TC",
+      "Zyyy": "Sarasa Mono TC"
+    },
     "defaultFontSize": 17,
     "defaultFixedFontSize": 16,
-    "minimumFontSize": 13,
-    "scripts": ["Hant", "Zyyy"]
+    "minimumFontSize": 13
   }
 }
 ```
 
-`Hant` targets Traditional Chinese. `Zyyy` supplies the common/default Chromium mapping so pages without a more specific script mapping still use the selected typography.
+Script codes follow Chromium's font script identifiers:
+
+| Code | Script |
+| --- | --- |
+| `Hant` | Traditional Chinese |
+| `Hans` | Simplified Chinese |
+| `Jpan` | Japanese |
+| `Kore` | Korean |
+| `Zyyy` | Common / default fallback |
 
 ## Browser profile locations
 
@@ -137,7 +189,8 @@ Within each directory it configures profiles named `Default` and `Profile N` whe
 - A website that explicitly supplies its own web font can still override browser fallback fonts.
 - The script intentionally changes only Chromium font-related preferences and font-size preferences.
 - Per-user font registration avoids requiring elevation and avoids modifying the system-wide font directory.
-- Direct-download sources such as LINE Seed TW are checked by archive SHA-256. GitHub sources additionally record the matched release tag.
+- Direct-download sources such as LINE Seed and MiSans are checked by archive SHA-256. GitHub sources additionally record the matched release tag.
+- LINE Seed JP installs desktop TTF only (`LINESeedJP_TTF_*.ttf`), not App fonts. MiSans installs static TTF only (`MiSans-*.ttf`), not `MiSansVF`.
 
 ## License
 

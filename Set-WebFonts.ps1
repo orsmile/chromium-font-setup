@@ -322,11 +322,25 @@ function Restore-FileSafely([string]$Source, [string]$Destination) {
     }
 }
 
-function Set-FontMap($FontsNode, [string]$Kind, [string]$Family, [string[]]$Scripts) {
+function Set-FontMap($FontsNode, [string]$Kind, $FamilyOrMap) {
     $kindNode = Ensure-Property $FontsNode $Kind ([pscustomobject]@{})
-    foreach ($script in $Scripts) {
-        $p = $kindNode.PSObject.Properties[$script]
-        if ($p) { $p.Value = $Family } else { $kindNode | Add-Member -NotePropertyName $script -NotePropertyValue $Family }
+
+    if ($null -eq $FamilyOrMap) { return }
+
+    if ($FamilyOrMap -is [string]) {
+        # Flat family name: write it as Chromium's Zyyy common/default script entry.
+        $p = $kindNode.PSObject.Properties['Zyyy']
+        if ($p) { $p.Value = $FamilyOrMap } else { $kindNode | Add-Member -NotePropertyName 'Zyyy' -NotePropertyValue $FamilyOrMap }
+        return
+    }
+
+    # Per-script map: { "Hant": "...", "Hans": "...", ... }
+    foreach ($prop in $FamilyOrMap.PSObject.Properties) {
+        if ($null -eq $prop.Value) { continue }
+        $p = $kindNode.PSObject.Properties[$prop.Name]
+        if ($p) { $p.Value = [string]$prop.Value } else {
+            $kindNode | Add-Member -NotePropertyName $prop.Name -NotePropertyValue ([string]$prop.Value)
+        }
     }
 }
 
@@ -336,10 +350,10 @@ function Update-BrowserPreferences([string]$Path, $Settings) {
     $webprefs = Ensure-Property $webkit 'webprefs' ([pscustomobject]@{})
     $fonts = Ensure-Property $webprefs 'fonts' ([pscustomobject]@{})
 
-    Set-FontMap $fonts 'standard' $Settings.standard $Settings.scripts
-    Set-FontMap $fonts 'sansserif' $Settings.sansSerif $Settings.scripts
-    Set-FontMap $fonts 'serif' $Settings.serif $Settings.scripts
-    Set-FontMap $fonts 'fixed' $Settings.fixed $Settings.scripts
+    Set-FontMap $fonts 'standard' $Settings.standard
+    Set-FontMap $fonts 'sansserif' $Settings.sansSerif
+    Set-FontMap $fonts 'serif' $Settings.serif
+    Set-FontMap $fonts 'fixed' $Settings.fixed
 
     foreach ($kv in @{
         default_font_size = [int]$Settings.defaultFontSize

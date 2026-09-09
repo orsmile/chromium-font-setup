@@ -7,9 +7,42 @@
       "sourceType": "direct",
       "url": "https://seed.line.me/src/images/fonts/LINE_Seed_TW.zip",
       "archiveType": "zip",
-      "installPatterns": ["*.ttf"],
+      "installPatterns": ["LINESeedTW_TTF_*.ttf"],
       "license": "SIL Open Font License 1.1",
       "homepage": "https://seed.line.me/index_tw.html"
+    },
+    {
+      "id": "line-seed-jp",
+      "displayName": "LINE Seed JP",
+      "browserFamily": "LINE Seed JP_TTF",
+      "sourceType": "direct",
+      "url": "https://seed.line.me/src/images/fonts/LINE_Seed_JP.zip",
+      "archiveType": "zip",
+      "installPatterns": ["LINESeedJP_TTF_*.ttf"],
+      "license": "SIL Open Font License 1.1",
+      "homepage": "https://seed.line.me/index_jp.html"
+    },
+    {
+      "id": "line-seed-kr",
+      "displayName": "LINE Seed KR",
+      "browserFamily": "LINE Seed Sans KR",
+      "sourceType": "direct",
+      "url": "https://seed.line.me/src/images/fonts/LINE_Seed_Sans_KR.zip",
+      "archiveType": "zip",
+      "installPatterns": ["LINESeedKR-*.ttf"],
+      "license": "SIL Open Font License 1.1",
+      "homepage": "https://seed.line.me/index_kr.html"
+    },
+    {
+      "id": "misans",
+      "displayName": "MiSans",
+      "browserFamily": "MiSans",
+      "sourceType": "direct",
+      "url": "https://hyperos.mi.com/font-download/MiSans.zip",
+      "archiveType": "zip",
+      "installPatterns": ["MiSans-*.ttf"],
+      "license": "MiSans Font License Agreement",
+      "homepage": "https://hyperos.mi.com/font/"
     },
     {
       "id": "noto-serif-tc",
@@ -37,13 +70,36 @@
     }
   ],
   "browserSettings": {
-    "standard": "LINE Seed TW_TTF",
-    "sansSerif": "LINE Seed TW_TTF",
-    "serif": "Noto Serif TC",
-    "fixed": "Sarasa Mono TC",
+    "standard": {
+      "Hant": "LINE Seed TW_TTF",
+      "Hans": "MiSans",
+      "Jpan": "LINE Seed JP_TTF",
+      "Kore": "LINE Seed Sans KR",
+      "Zyyy": "MiSans"
+    },
+    "sansSerif": {
+      "Hant": "LINE Seed TW_TTF",
+      "Hans": "MiSans",
+      "Jpan": "LINE Seed JP_TTF",
+      "Kore": "LINE Seed Sans KR",
+      "Zyyy": "MiSans"
+    },
+    "serif": {
+      "Hant": "Noto Serif TC",
+      "Hans": "Noto Serif TC",
+      "Jpan": "Noto Serif TC",
+      "Kore": "Noto Serif TC",
+      "Zyyy": "Noto Serif TC"
+    },
+    "fixed": {
+      "Hant": "Sarasa Mono TC",
+      "Hans": "Sarasa Mono TC",
+      "Jpan": "Sarasa Mono TC",
+      "Kore": "Sarasa Mono TC",
+      "Zyyy": "Sarasa Mono TC"
+    },
     "defaultFontSize": 17,
     "defaultFixedFontSize": 16,
-    "minimumFontSize": 13,
-    "scripts": ["Hant", "Zyyy"]
+    "minimumFontSize": 13
   }
 }
