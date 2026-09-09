@@ -6,7 +6,7 @@ The default profile is tuned for high-DPI displays and multi-script CJK browsing
 
 | Setting | Default |
 | --- | --- |
-| Standard / Sans-serif · `Hant` | LINE Seed TW_TTF |
+| Standard / Sans-serif · `Hant` | MiSans |
 | Standard / Sans-serif · `Hans` | MiSans |
 | Standard / Sans-serif · `Jpan` | LINE Seed JP_TTF |
 | Standard / Sans-serif · `Kore` | LINE Seed Sans KR |
@@ -128,14 +128,14 @@ Example browser configuration:
 {
   "browserSettings": {
     "standard": {
-      "Hant": "LINE Seed TW_TTF",
+      "Hant": "MiSans",
       "Hans": "MiSans",
       "Jpan": "LINE Seed JP_TTF",
       "Kore": "LINE Seed Sans KR",
       "Zyyy": "MiSans"
     },
     "sansSerif": {
-      "Hant": "LINE Seed TW_TTF",
+      "Hant": "MiSans",
       "Hans": "MiSans",
       "Jpan": "LINE Seed JP_TTF",
       "Kore": "LINE Seed Sans KR",

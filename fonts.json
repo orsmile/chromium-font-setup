@@ -71,14 +71,14 @@
   ],
   "browserSettings": {
     "standard": {
-      "Hant": "LINE Seed TW_TTF",
+      "Hant": "MiSans",
       "Hans": "MiSans",
       "Jpan": "LINE Seed JP_TTF",
       "Kore": "LINE Seed Sans KR",
       "Zyyy": "MiSans"
     },
     "sansSerif": {
-      "Hant": "LINE Seed TW_TTF",
+      "Hant": "MiSans",
       "Hans": "MiSans",
       "Jpan": "LINE Seed JP_TTF",
       "Kore": "LINE Seed Sans KR",
